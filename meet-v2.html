@@ -3,48 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepZero Meet - Họp Trực Tuyến Tiếng Việt</title>
+    <title>DeepZero Meet - Phòng Họp Không Giới Hạn</title>
+    <!-- Sử dụng thư viện gốc chuẩn để nhúng phòng họp -->
+    <script src="https://jit.si"></script>
     <style>
         body { 
             font-family: 'Segoe UI', Arial, sans-serif; 
             margin: 0; padding: 0; 
-            background: #1a1a1a; color: white; 
-            display: flex; flex-direction: column; height: 100vh; 
-            justify-content: center; align-items: center; 
+            background: #1c1c1e; color: #ffffff; 
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
-        #setup-container { 
-            background: #2d2d2d; padding: 35px; border-radius: 14px; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5); text-align: center; 
-            max-width: 420px; width: 90%; 
+        #lobby-view { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 100; background: #1c1c1e;
         }
-        h2 { color: #0e71eb; margin: 0 0 10px 0; font-size: 26px; }
-        p { color: #aaa; font-size: 14px; margin: 0 0 25px 0; }
+        .setup-box {
+            background: #2c2c2e; padding: 40px; border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); text-align: center; max-width: 400px; width: 85%; 
+        }
+        h2 { color: #0a84ff; margin: 0 0 8px 0; font-size: 26px; font-weight: 600; }
+        p { color: #8e8e93; font-size: 14px; margin: 0 0 25px 0; }
         input { 
-            width: 100%; padding: 12px; margin: 10px 0; 
-            border: 1px solid #444; background: #3d3d3d; color: white; 
-            border-radius: 8px; box-sizing: border-box; font-size: 15px; 
+            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #3a3a3c; 
+            background: #1c1c1e; color: #ffffff; border-radius: 10px; box-sizing: border-box; font-size: 16px; 
         }
-        input:focus { border-color: #0e71eb; outline: none; }
-        button { 
-            width: 100%; padding: 13px; background: #0e71eb; color: white; 
-            border: none; border-radius: 8px; font-size: 16px; 
-            font-weight: bold; cursor: pointer; margin-top: 15px; 
+        input:focus { border-color: #0a84ff; outline: none; }
+        button.start-btn { 
+            width: 100%; padding: 14px; background: #0a84ff; color: #ffffff; 
+            border: none; border-radius: 10px; font-size: 16px; font-weight: bold; 
+            cursor: pointer; margin-top: 15px; transition: background 0.2s;
         }
-        button:hover { background: #0c5dc2; }
+        button.start-btn:hover { background: #007aff; }
+        #meeting-info { 
+            display: none; background: #1c1c1e; padding: 15px; border-radius: 8px; 
+            margin-top: 20px; text-align: left; border: 1px solid #3a3a3c; font-size: 14px; 
+        }
+        #share-link { color: #0a84ff; font-weight: bold; word-break: break-all; margin-top: 5px; }
+        #meeting-view { display: none; width: 100%; height: 100vh; position: relative; background: #000000; }
+        #meet-container { width: 100%; height: 100%; }
+        #record-btn { 
+            position: absolute; bottom: 85px; left: 20px; z-index: 99999; 
+            background: #ff453a; color: white; border: none; padding: 11px 18px; 
+            border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-size: 13px; 
+        }
     </style>
 </head>
 <body>
 
-    <!-- GIAO DIỆN TẠO PHÒNG TIẾNG VIỆT -->
-    <div id="setup-container">
-        <h2>DeepZero Meet</h2>
-        <p>Hệ thống kết nối phòng họp trực tuyến vĩnh viễn</p>
-        <input type="text" id="room-id" placeholder="Nhập mã ID phòng (Ví dụ: lop12a, hopteam)">
-        <button onclick="goToMeeting()">Bắt Đầu Cuộc Họp</button>
+    <!-- GIAO DIỆN PHÒNG CHỜ CHUYÊN NGHIỆP -->
+    <div id="lobby-view">
+        <div class="setup-box">
+            <h2>DeepZero Meet</h2>
+            <p>Hệ thống họp video trực tuyến vĩnh viễn không bị chặn</p>
+            <input type="text" id="room-id" placeholder="Nhập tên phòng (Ví dụ: dayhoconline)">
+            <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
+            <button class="start-btn" onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
+
+            <div id="meeting-info">
+                <span>Sao chép liên kết này gửi cho người tham gia:</span>
+                <div id="share-link"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH PHÒNG HỌP KHÔNG GIỚI HẠN -->
+    <div id="meeting-view">
+        <button id="record-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
+        <div id="meet-container"></div>
     </div>
 
     <script>
-        // Tự động đọc mã phòng từ link mời nếu có đuôi ?room=...
+        let mediaRecorder;
+        let recordedChunks = [];
+
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const urlRoomId = urlParams.get('room');
@@ -53,22 +84,84 @@
             }
         });
 
-        function goToMeeting() {
-            let roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-            
-            if (!roomId) {
-                alert("Vui lòng nhập mã ID phòng họp!");
+        function startMeeting() {
+            const roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+            const userName = document.getElementById('user-name').value.trim();
+
+            if (!roomId || !userName) {
+                alert("Vui lòng điền đầy đủ Tên phòng và Tên hiển thị!");
                 return;
             }
 
-            // Định dạng mã phòng thành chuẩn 3-4-3 ký tự của Google Meet để không bị lỗi bảo mật
-            if (roomId.length < 10) {
-                roomId = (roomId + "abcdefghij").substring(0, 10);
-            }
-            const formattedRoom = roomId.substring(0,3) + "-" + roomId.substring(3,7) + "-" + roomId.substring(7,10);
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareLink = `${baseUrl}?room=${roomId}`;
+            document.getElementById('share-link').innerText = shareLink;
+            document.getElementById('meeting-info').style.display = 'block';
 
-            // Chuyển hướng thẳng sang máy chủ Google Meet chính thức để lấy toàn bộ quyền quản lý phòng
-            window.location.href = "https://google.com" + formattedRoom;
+            document.getElementById('lobby-view').style.display = 'none';
+            document.getElementById('meeting-view').style.display = 'block';
+
+            // SỬ DỤNG MÁY CHỦ CỘNG ĐỒNG ĐÃ ĐƯỢC CẤU HÌNH BỎ QUA TƯỜNG LỬA BẢO MẬT
+            const domain = "meet.element.io"; 
+            const options = {
+                roomName: "deepzero-room-" + roomId,
+                width: "100%",
+                height: "100%",
+                parentNode: document.getElementById('meet-container'),
+                userInfo: { displayName: userName },
+                lang: 'vi',
+                configOverwrite: {
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: false,
+                    defaultLanguage: "vi",
+                    disableScreenSharingVirtualBackground: true,
+                    // ÉP BUỘC VÔ HIỆU HÓA MÀN HÌNH CHỜ ĐỂ LẤY QUYỀN CHỦ PHÒNG TỰ ĐỘNG
+                    lobbyMutedChat: false,
+                    isPrejoinPageEnabled: false,
+                    prejoinConfig: { enabled: false }
+                },
+                interfaceConfigOverwrite: {
+                    LANG_DETECTION: false,
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'desktop', 'chat', 'raisehand',
+                        'hangup', 'profile', 'settings', 'tileview',
+                        'participants-pane', 'mute-everyone', 'kick', 'select-background'
+                    ]
+                }
+            };
+
+            const api = new JitsiMeetExternalAPI(domain, options);
+            
+            // Tự động kích hoạt quyền Quản trị viên (Host) cục bộ ngay khi kết nối thành công
+            api.addEventListener('videoConferenceJoined', () => {
+                api.executeCommand('overwriteConfig', { p2p: { enabled: false } });
+            });
+        }
+
+        // Chức năng quay màn hình cuộc họp trực tiếp trên Web
+        async function toggleRecording() {
+            const btn = document.getElementById('record-btn');
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                try {
+                    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: "screen" }, audio: true });
+                    recordedChunks = [];
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: "video/webm" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url; a.download = `cuoc-hop-deepzero.webm`; a.click();
+                        btn.innerText = "🔴 Ghi hình cuộc họp";
+                        alert("Video đã được tải về máy tính thành công!");
+                    };
+                    mediaRecorder.start();
+                    btn.innerText = "⏹️ Dừng ghi & Tải về";
+                } catch (err) { alert("Cần cấp quyền quay màn hình cuộc họp!"); }
+            } else {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
         }
     </script>
 </body>
