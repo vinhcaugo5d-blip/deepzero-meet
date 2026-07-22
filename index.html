@@ -6,7 +6,186 @@
     <title>DeepZero Meet - Phòng Họp Trực Tuyến</title>
     
     <!-- ĐƯỜNG LINK THƯ VIỆN CHUẨN ĐÃ ĐƯỢC SỬA LỖI -->
-    <script src="https://meet.jit.si/external_api.js"></script>
+    <script src=<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepZero Meet - Phòng Họp Trực Tuyến</title>
+    
+    <!-- Dùng Server Jitsi mở không giới hạn 5 phút -->
+    <script src="https://jitsi.member.fsf.org/external_api.js"></script>
+
+    <style>
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; padding: 0; background: #1c1c1e; color: #ffffff; 
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+        #lobby-view { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 100; background: #1c1c1e;
+        }
+        .setup-box {
+            background: #2c2c2e; padding: 35px; border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); text-align: center; max-width: 400px; width: 85%; 
+        }
+        h2 { color: #0a84ff; margin: 0 0 8px 0; font-size: 26px; font-weight: 600; }
+        p { color: #8e8e93; font-size: 14px; margin: 0 0 25px 0; }
+        input { 
+            width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #3a3a3c; 
+            background: #1c1c1e; color: #ffffff; border-radius: 10px; box-sizing: border-box; font-size: 15px; 
+        }
+        input:focus { border-color: #0a84ff; outline: none; }
+        button.start-btn { 
+            width: 100%; padding: 14px; background: #0a84ff; color: #ffffff; 
+            border: none; border-radius: 10px; font-size: 16px; font-weight: bold; 
+            cursor: pointer; margin-top: 15px; transition: background 0.2s;
+        }
+        button.start-btn:hover { background: #007aff; }
+
+        #meeting-view { display: none; width: 100%; height: 100vh; position: relative; background: #000000; }
+        #meet-container { width: 100%; height: 100%; }
+        
+        .controls-bar {
+            position: absolute; bottom: 85px; left: 20px; z-index: 99999; display: flex; gap: 10px;
+        }
+        .action-btn {
+            background: #ff453a; color: white; border: none; padding: 10px 16px; 
+            border-radius: 20px; font-weight: bold; cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-size: 13px;
+        }
+        .action-btn.share { background: #30d158; }
+        .action-btn.recording { background: #8e8e93; }
+    </style>
+</head>
+<body>
+
+    <div id="lobby-view">
+        <div class="setup-box">
+            <h2>DeepZero Meet</h2>
+            <p>Hệ thống họp trực tuyến vĩnh viễn không giới hạn</p>
+            <input type="text" id="room-id" placeholder="Nhập mã ID phòng (Ví dụ: lop12a)">
+            <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
+            <button class="start-btn" onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
+        </div>
+    </div>
+
+    <div id="meeting-view">
+        <div class="controls-bar">
+            <button id="record-btn" class="action-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
+            <button class="action-btn share" onclick="copyInviteLink()">📋 Copy link mời</button>
+        </div>
+        <div id="meet-container"></div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let recordedChunks = [];
+        let currentShareLink = "";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlRoomId = urlParams.get('room');
+            if (urlRoomId) {
+                document.getElementById('room-id').value = urlRoomId;
+            }
+        });
+
+        function startMeeting() {
+            const roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+            const userName = document.getElementById('user-name').value.trim();
+
+            if (!roomId || !userName) {
+                alert("Vui lòng điền đầy đủ Mã phòng và Tên hiển thị!");
+                return;
+            }
+
+            const baseUrl = window.location.origin + window.location.pathname;
+            currentShareLink = `${baseUrl}?room=${roomId}`;
+
+            document.getElementById('lobby-view').style.display = 'none';
+            document.getElementById('meeting-view').style.display = 'block';
+
+            // Dùng Domain máy chủ mở không giới hạn
+            const domain = "jitsi.member.fsf.org";
+            const options = {
+                roomName: "deepzero-" + roomId,
+                width: "100%",
+                height: "100%",
+                parentNode: document.getElementById('meet-container'),
+                userInfo: { displayName: userName },
+                lang: 'vi',
+                configOverwrite: {
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: false,
+                    defaultLanguage: "vi"
+                }
+            };
+
+            const api = new JitsiMeetExternalAPI(domain, options);
+        }
+
+        function copyInviteLink() {
+            if (currentShareLink) {
+                navigator.clipboard.writeText(currentShareLink).then(() => {
+                    alert("Đã sao chép link phòng họp!");
+                });
+            }
+        }
+
+        async function toggleRecording() {
+            const btn = document.getElementById('record-btn');
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                try {
+                    const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                    let micStream;
+                    try { micStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) {}
+
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const audioDestination = audioContext.createMediaStreamDestination();
+
+                    if (displayStream.getAudioTracks().length > 0) {
+                        audioContext.createMediaStreamSource(displayStream).connect(audioDestination);
+                    }
+                    if (micStream && micStream.getAudioTracks().length > 0) {
+                        audioContext.createMediaStreamSource(micStream).connect(audioDestination);
+                    }
+
+                    const combinedTracks = [
+                        ...displayStream.getVideoTracks(),
+                        ...audioDestination.stream.getAudioTracks()
+                    ];
+                    
+                    recordedChunks = [];
+                    mediaRecorder = new MediaRecorder(new MediaStream(combinedTracks), { mimeType: "video/webm;codecs=vp9" });
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: "video/webm" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `cuoc-hop-${Date.now()}.webm`;
+                        a.click();
+                        displayStream.getTracks().forEach(t => t.stop());
+                        if (micStream) micStream.getTracks().forEach(t => t.stop());
+                        btn.innerText = "🔴 Ghi hình cuộc họp";
+                        btn.classList.remove('recording');
+                    };
+
+                    mediaRecorder.start();
+                    btn.innerText = "⏹️ Dừng ghi & Tải về";
+                    btn.classList.add('recording');
+                } catch (err) {
+                    alert("Không thể ghi hình!");
+                }
+            } else {
+                mediaRecorder.stop();
+            }
+        }
+    </script>
+</body>
+</html>"https://meet.jit.si/external_api.js"></script>
 
     <style>
         body { 
