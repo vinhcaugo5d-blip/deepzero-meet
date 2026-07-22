@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepZero Meet - Phòng Họp Trực Tuyến</title>
+    <title>DeepZero Meet - Hệ Thống Họp Trực Tuyến Chuyên Nghiệp</title>
     <!-- Nhúng API kết nối Video Jitsi -->
     <script src="https://jit.si"></script>
     <style>
@@ -11,111 +11,127 @@
             font-family: 'Segoe UI', Arial, sans-serif; 
             margin: 0; 
             padding: 0; 
-            background: #1a1a1a; 
-            color: white; 
+            background: #1c1c1e; 
+            color: #ffffff; 
             display: flex; 
             flex-direction: column; 
             height: 100vh; 
+            overflow: hidden;
+        }
+        /* GIAO DIỆN PHÒNG CHỜ (MÀN HÌNH ĐĂNG NHẬP) */
+        #lobby-view { 
+            display: flex;
+            flex-direction: column;
             justify-content: center; 
             align-items: center; 
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            background: #1c1c1e;
         }
-        #setup-container { 
-            background: #2d2d2d; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.5); 
+        .setup-box {
+            background: #2c2c2e; 
+            padding: 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
             text-align: center; 
             max-width: 400px; 
-            width: 90%; 
-            display: block; /* Ép buộc form luôn luôn hiển thị lúc đầu */
+            width: 85%; 
         }
-        h2 { color: #0e71eb; margin: 0 0 10px 0; font-size: 24px; }
-        p { color: #aaa; font-size: 13px; margin: 0 0 20px 0; }
+        h2 { color: #0a84ff; margin: 0 0 8px 0; font-size: 26px; font-weight: 600; }
+        p { color: #8e8e93; font-size: 14px; margin: 0 0 25px 0; }
         input, select { 
             width: 100%; 
-            padding: 12px; 
-            margin: 8px 0; 
-            border: 1px solid #444; 
-            background: #3d3d3d; 
-            color: white; 
-            border-radius: 6px; 
+            padding: 14px; 
+            margin: 10px 0; 
+            border: 1px solid #3a3a3c; 
+            background: #1c1c1e; 
+            color: #ffffff; 
+            border-radius: 10px; 
             box-sizing: border-box; 
-            font-size: 15px; 
+            font-size: 16px; 
         }
-        input:focus, select:focus { border-color: #0e71eb; outline: none; }
+        input:focus, select:focus { border-color: #0a84ff; outline: none; }
         button.start-btn { 
             width: 100%; 
-            padding: 12px; 
-            background: #0e71eb; 
-            color: white; 
+            padding: 14px; 
+            background: #0a84ff; 
+            color: #ffffff; 
             border: none; 
-            border-radius: 6px; 
+            border-radius: 10px; 
             font-size: 16px; 
             font-weight: bold; 
             cursor: pointer; 
-            margin-top: 10px; 
+            margin-top: 15px; 
+            transition: background 0.2s;
         }
-        button.start-btn:hover { background: #0c5dc2; }
+        button.start-btn:hover { background: #007aff; }
         #meeting-info { 
             display: none; 
-            background: #222; 
-            padding: 12px; 
-            border-radius: 6px; 
-            margin-top: 15px; 
+            background: #1c1c1e; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-top: 20px; 
             text-align: left; 
-            border: 1px solid #333; 
+            border: 1px solid #3a3a3c; 
             font-size: 14px; 
         }
-        #share-link { color: #0e71eb; font-weight: bold; word-break: break-all; margin-top: 5px; }
+        #share-link { color: #0a84ff; font-weight: bold; word-break: break-all; margin-top: 5px; }
         
-        /* Cấu hình khung chứa video họp độc lập */
-        #meet-wrapper { 
+        /* GIAO DIỆN PHÒNG HỌP VIDEO CHÍNH */
+        #meeting-view { 
             display: none; 
             width: 100%; 
             height: 100vh; 
             position: relative; 
-            background: #000; 
+            background: #000000; 
         }
         #meet-container { width: 100%; height: 100%; }
         #record-btn { 
             position: absolute; 
             bottom: 85px; 
             left: 20px; 
-            z-index: 9999; 
-            background: #ea4335; 
+            z-index: 99999; 
+            background: #ff453a; 
             color: white; 
             border: none; 
-            padding: 10px 15px; 
+            padding: 11px 18px; 
             border-radius: 20px; 
             font-weight: bold; 
             cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); 
             font-size: 13px; 
         }
+        #record-btn.recording { background: #8e8e93; }
     </style>
 </head>
 <body>
 
-    <!-- GIAO DIỆN FORM ĐĂNG NHẬP / TẠO PHÒNG (LUÔN HIỆN BAN ĐẦU) -->
-    <div id="setup-container">
-        <h2>DeepZero Meet</h2>
-        <p>Hệ thống họp video trực tuyến vĩnh viễn miễn phí</p>
-        <input type="text" id="room-id" placeholder="Nhập mã ID phòng (Ví dụ: lop12a)">
-        <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
-        <select id="user-role">
-            <option value="host">Chủ phòng (Quản trị viên)</option>
-            <option value="member">Thành viên tham gia</option>
-        </select>
-        <button class="start-btn" onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
+    <!-- MÀN HÌNH 1: PHÒNG CHỜ NHẬP THÔNG TIN (LUÔN CỐ ĐỊNH BAN ĐẦU) -->
+    <div id="lobby-view">
+        <div class="setup-box">
+            <h2>DeepZero Meet</h2>
+            <p>Phần mềm họp trực tuyến vĩnh viễn miễn phí</p>
+            <input type="text" id="room-id" placeholder="Nhập mã ID phòng (Ví dụ: lop12a)">
+            <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
+            <select id="user-role">
+                <option value="host">Chủ phòng (Quản trị viên)</option>
+                <option value="member">Thành viên tham gia</option>
+            </select>
+            <button class="start-btn" onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
 
-        <div id="meeting-info">
-            <span>Sao chép link này gửi cho người khác vào cùng:</span>
-            <div id="share-link"></div>
+            <div id="meeting-info">
+                <span>Sao chép liên kết này gửi cho người khác vào cùng:</span>
+                <div id="share-link"></div>
+            </div>
         </div>
     </div>
 
-    <!-- KHUNG PHÒNG HỌP VIDEO (CHỈ HIỆN KHI BẤM NÚT START) -->
-    <div id="meet-wrapper">
+    <!-- MÀN HÌNH 2: KHUNG VIDEO PHÒNG HỌP CHÍNH (ẨN ĐI LÚC ĐẦU) -->
+    <div id="meeting-view">
         <button id="record-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
         <div id="meet-container"></div>
     </div>
@@ -124,7 +140,7 @@
         let mediaRecorder;
         let recordedChunks = [];
 
-        // Đọc tham số mã phòng từ link mời nhưng KHÔNG tự động ẩn giao diện
+        // Đọc tham số mã phòng từ link mời nhưng KHÔNG can thiệp ẩn hiện form
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const urlRoomId = urlParams.get('room');
@@ -134,31 +150,28 @@
             }
         });
 
-        // Hàm kích hoạt phòng họp khi bấm nút
+        // Hàm chính kích hoạt phòng họp khi bấm nút Start
         function startMeeting() {
             const roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
             const userName = document.getElementById('user-name').value.trim();
             const userRole = document.getElementById('user-role').value;
 
             if (!roomId || !userName) {
-                alert("Vui lòng điền đầy đủ ID Phòng và Tên!");
+                alert("Vui lòng điền đầy đủ ID Phòng và Tên hiển thị!");
                 return;
             }
 
-            // Tạo link mời chuẩn
+            // Sinh link mời tham gia phòng
             const baseUrl = window.location.origin + window.location.pathname;
             const shareLink = `${baseUrl}?room=${roomId}`;
             document.getElementById('share-link').innerText = shareLink;
             document.getElementById('meeting-info').style.display = 'block';
 
-            // Thực hiện ẩn form cấu hình và kích hoạt khung video toàn màn hình
-            document.getElementById('setup-container').style.display = 'none';
-            document.getElementById('meet-wrapper').style.display = 'block';
-            
-            // Căn chỉnh lại body để khung video chiếm toàn bộ không gian
-            document.body.style.justifyContent = 'stretch';
-            document.body.style.alignItems = 'stretch';
+            // Xử lý chuyển đổi màn hình: Xóa bỏ phòng chờ, dựng phòng họp video chính
+            document.getElementById('lobby-view').style.display = 'none';
+            document.getElementById('meeting-view').style.display = 'block';
 
+            // Khởi tạo máy chủ kết nối truyền video
             const domain = "meet.jit.si";
             const options = {
                 roomName: "deepzero-" + roomId,
@@ -185,14 +198,15 @@
 
             const api = new JitsiMeetExternalAPI(domain, options);
 
+            // Phân quyền cho chủ phòng
             if (userRole === 'host') {
                 api.addEventListener('videoConferenceJoined', () => {
-                    alert("Bạn là Chủ Phòng! Quyền Mute All và Đuổi người dùng đã được kích hoạt trong phần Thành viên.");
+                    alert("Bạn đăng nhập với tư cách Chủ Phòng! Tính năng Tắt mic tập thể (Mute All) và Đuổi người tham gia (Kick) đã sẵn sàng ở tab Danh sách thành viên.");
                 });
             }
         }
 
-        // Chức năng quay video cuộc họp
+        // Chức năng quay màn hình và tải video cuộc họp về máy
         async function toggleRecording() {
             const btn = document.getElementById('record-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
@@ -209,12 +223,12 @@
                         a.download = `cuoc-hop-deepzero.webm`;
                         a.click();
                         btn.innerText = "🔴 Ghi hình cuộc họp";
-                        alert("Video đã được tải về máy tính thành công!");
+                        alert("Video cuộc họp đã được tải thành công về thư mục Downloads máy tính!");
                     };
                     mediaRecorder.start();
                     btn.innerText = "⏹️ Dừng ghi & Tải về";
                 } catch (err) {
-                    alert("Cần cấp quyền để quay màn hình cuộc họp!");
+                    alert("Bạn cần cấp quyền chia sẻ tab trình duyệt để thực hiện ghi hình!");
                 }
             } else {
                 mediaRecorder.stop();
