@@ -3,27 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepZero Meet - Họp Trực Tuyến Tiếng Việt</title>
+    <title>DeepZero Meet - Phòng Họp Trực Tuyến</title>
+    <!-- Nhúng API kết nối Video Jitsi -->
     <script src="https://jit.si"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #1a1a1a; color: white; display: flex; flex-direction: column; height: 100vh; justify-content: center; align-items: center; }
-        #setup-container { background: #2d2d2d; padding: 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); text-align: center; max-width: 400px; width: 90%; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #1a1a1a; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        #setup-container { 
+            background: #2d2d2d; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5); 
+            text-align: center; 
+            max-width: 400px; 
+            width: 90%; 
+            display: block; /* Ép buộc form luôn luôn hiển thị lúc đầu */
+        }
         h2 { color: #0e71eb; margin: 0 0 10px 0; font-size: 24px; }
         p { color: #aaa; font-size: 13px; margin: 0 0 20px 0; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #444; background: #3d3d3d; color: white; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border: 1px solid #444; 
+            background: #3d3d3d; 
+            color: white; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 15px; 
+        }
         input:focus, select:focus { border-color: #0e71eb; outline: none; }
-        button.start-btn { width: 100%; padding: 12px; background: #0e71eb; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button.start-btn { 
+            width: 100%; 
+            padding: 12px; 
+            background: #0e71eb; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+        }
         button.start-btn:hover { background: #0c5dc2; }
-        #meeting-info { display: none; background: #222; padding: 12px; border-radius: 6px; margin-top: 15px; text-align: left; border: 1px solid #333; font-size: 14px; }
+        #meeting-info { 
+            display: none; 
+            background: #222; 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-top: 15px; 
+            text-align: left; 
+            border: 1px solid #333; 
+            font-size: 14px; 
+        }
         #share-link { color: #0e71eb; font-weight: bold; word-break: break-all; margin-top: 5px; }
-        #meet-wrapper { display: none; width: 100%; height: 100vh; position: relative; background: #000; }
+        
+        /* Cấu hình khung chứa video họp độc lập */
+        #meet-wrapper { 
+            display: none; 
+            width: 100%; 
+            height: 100vh; 
+            position: relative; 
+            background: #000; 
+        }
         #meet-container { width: 100%; height: 100%; }
-        #record-btn { position: absolute; bottom: 85px; left: 20px; z-index: 9999; background: #ea4335; color: white; border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-size: 13px; }
+        #record-btn { 
+            position: absolute; 
+            bottom: 85px; 
+            left: 20px; 
+            z-index: 9999; 
+            background: #ea4335; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 20px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            font-size: 13px; 
+        }
     </style>
 </head>
 <body>
 
-    <!-- KHUNG ĐĂNG NHẬP / TẠO PHÒNG -->
+    <!-- GIAO DIỆN FORM ĐĂNG NHẬP / TẠO PHÒNG (LUÔN HIỆN BAN ĐẦU) -->
     <div id="setup-container">
         <h2>DeepZero Meet</h2>
         <p>Hệ thống họp video trực tuyến vĩnh viễn miễn phí</p>
@@ -41,7 +114,7 @@
         </div>
     </div>
 
-    <!-- KHUNG PHÒNG HỌP VIDEO CHÍNH CHỨA NÚT GHI HÌNH CỐ ĐỊNH -->
+    <!-- KHUNG PHÒNG HỌP VIDEO (CHỈ HIỆN KHI BẤM NÚT START) -->
     <div id="meet-wrapper">
         <button id="record-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
         <div id="meet-container"></div>
@@ -51,13 +124,17 @@
         let mediaRecorder;
         let recordedChunks = [];
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlRoomId = urlParams.get('room');
-        if (urlRoomId) {
-            document.getElementById('room-id').value = urlRoomId;
-            document.getElementById('user-role').value = 'member';
-        }
+        // Đọc tham số mã phòng từ link mời nhưng KHÔNG tự động ẩn giao diện
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlRoomId = urlParams.get('room');
+            if (urlRoomId) {
+                document.getElementById('room-id').value = urlRoomId;
+                document.getElementById('user-role').value = 'member';
+            }
+        });
 
+        // Hàm kích hoạt phòng họp khi bấm nút
         function startMeeting() {
             const roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
             const userName = document.getElementById('user-name').value.trim();
@@ -68,14 +145,17 @@
                 return;
             }
 
-            const currentUrl = window.location.href.split('?');
-            const shareLink = `${currentUrl}?room=${roomId}`;
+            // Tạo link mời chuẩn
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareLink = `${baseUrl}?room=${roomId}`;
             document.getElementById('share-link').innerText = shareLink;
             document.getElementById('meeting-info').style.display = 'block';
 
-            // Ẩn form nhập liệu ban đầu, hiển thị bao quát khung họp video
+            // Thực hiện ẩn form cấu hình và kích hoạt khung video toàn màn hình
             document.getElementById('setup-container').style.display = 'none';
             document.getElementById('meet-wrapper').style.display = 'block';
+            
+            // Căn chỉnh lại body để khung video chiếm toàn bộ không gian
             document.body.style.justifyContent = 'stretch';
             document.body.style.alignItems = 'stretch';
 
@@ -112,6 +192,7 @@
             }
         }
 
+        // Chức năng quay video cuộc họp
         async function toggleRecording() {
             const btn = document.getElementById('record-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
