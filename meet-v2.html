@@ -3,79 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepZero Meet - Phần Mềm Họp Trực Tuyến Không Giới Hạn</title>
-    <!-- Nhúng thư viện kết nối Video chuẩn API -->
-    <script src="https://jit.si"></script>
+    <title>DeepZero Meet - Họp Trực Tuyến Tiếng Việt</title>
     <style>
         body { 
             font-family: 'Segoe UI', Arial, sans-serif; 
             margin: 0; padding: 0; 
-            background: #1c1c1e; color: #ffffff; 
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+            background: #1a1a1a; color: white; 
+            display: flex; flex-direction: column; height: 100vh; 
+            justify-content: center; align-items: center; 
         }
-        #lobby-view { 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            height: 100vh; width: 100vw; position: absolute; top: 0; left: 0; z-index: 100; background: #1c1c1e;
+        #setup-container { 
+            background: #2d2d2d; padding: 35px; border-radius: 14px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5); text-align: center; 
+            max-width: 420px; width: 90%; 
         }
-        .setup-box {
-            background: #2c2c2e; padding: 40px; border-radius: 16px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6); text-align: center; max-width: 400px; width: 85%; 
-        }
-        h2 { color: #0a84ff; margin: 0 0 8px 0; font-size: 26px; font-weight: 600; }
-        p { color: #8e8e93; font-size: 14px; margin: 0 0 25px 0; }
+        h2 { color: #0e71eb; margin: 0 0 10px 0; font-size: 26px; }
+        p { color: #aaa; font-size: 14px; margin: 0 0 25px 0; }
         input { 
-            width: 100%; padding: 14px; margin: 10px 0; border: 1px solid #3a3a3c; 
-            background: #1c1c1e; color: #ffffff; border-radius: 10px; box-sizing: border-box; font-size: 16px; 
+            width: 100%; padding: 12px; margin: 10px 0; 
+            border: 1px solid #444; background: #3d3d3d; color: white; 
+            border-radius: 8px; box-sizing: border-box; font-size: 15px; 
         }
-        input:focus { border-color: #0a84ff; outline: none; }
-        button.start-btn { 
-            width: 100%; padding: 14px; background: #0a84ff; color: #ffffff; 
-            border: none; border-radius: 10px; font-size: 16px; font-weight: bold; 
-            cursor: pointer; margin-top: 15px; transition: background 0.2s;
+        input:focus { border-color: #0e71eb; outline: none; }
+        button { 
+            width: 100%; padding: 13px; background: #0e71eb; color: white; 
+            border: none; border-radius: 8px; font-size: 16px; 
+            font-weight: bold; cursor: pointer; margin-top: 15px; 
         }
-        button.start-btn:hover { background: #007aff; }
-        #meeting-info { 
-            display: none; background: #1c1c1e; padding: 15px; border-radius: 8px; 
-            margin-top: 20px; text-align: left; border: 1px solid #3a3a3c; font-size: 14px; 
-        }
-        #share-link { color: #0a84ff; font-weight: bold; word-break: break-all; margin-top: 5px; }
-        #meeting-view { display: none; width: 100%; height: 100vh; position: relative; background: #000000; }
-        #meet-container { width: 100%; height: 100%; }
-        #record-btn { 
-            position: absolute; bottom: 85px; left: 20px; z-index: 99999; 
-            background: #ff453a; color: white; border: none; padding: 11px 18px; 
-            border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5); font-size: 13px; 
-        }
+        button:hover { background: #0c5dc2; }
     </style>
 </head>
 <body>
 
-    <!-- GIAO DIỆN PHÒNG CHỜ (CHỈ CẦN ID PHÒNG VÀ TÊN) -->
-    <div id="lobby-view">
-        <div class="setup-box">
-            <h2>DeepZero Meet</h2>
-            <p>Hệ thống họp trực tuyến mở rộng vĩnh viễn miễn phí</p>
-            <input type="text" id="room-id" placeholder="Nhập tên phòng (Ví dụ: dayhoconline)">
-            <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
-            <button class="start-btn" onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
-
-            <div id="meeting-info">
-                <span>Gửi liên kết này cho người tham gia:</span>
-                <div id="share-link"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MÀN HÌNH CUỘC HỌP VIDEO CHÍNH -->
-    <div id="meeting-view">
-        <button id="record-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
-        <div id="meet-container"></div>
+    <!-- GIAO DIỆN TẠO PHÒNG TIẾNG VIỆT -->
+    <div id="setup-container">
+        <h2>DeepZero Meet</h2>
+        <p>Hệ thống kết nối phòng họp trực tuyến vĩnh viễn</p>
+        <input type="text" id="room-id" placeholder="Nhập mã ID phòng (Ví dụ: lop12a, hopteam)">
+        <button onclick="goToMeeting()">Bắt Đầu Cuộc Họp</button>
     </div>
 
     <script>
-        let mediaRecorder;
-        let recordedChunks = [];
-
+        // Tự động đọc mã phòng từ link mời nếu có đuôi ?room=...
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const urlRoomId = urlParams.get('room');
@@ -84,51 +53,22 @@
             }
         });
 
-        function startMeeting() {
-            const roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
-            const userName = document.getElementById('user-name').value.trim();
-
-            if (!roomId || !userName) {
-                alert("Vui lòng nhập đầy đủ Tên phòng và Tên của bạn!");
+        function goToMeeting() {
+            let roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+            
+            if (!roomId) {
+                alert("Vui lòng nhập mã ID phòng họp!");
                 return;
             }
 
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareLink = baseUrl + "?room=" + roomId;
-            document.getElementById('share-link').innerText = shareLink;
-            document.getElementById('meeting-info').style.display = 'block';
-
-            const roomName = "dzmeet-" + roomId;
-
-            // ĐÃ SỬA: Chuyển hướng chuẩn xác tuyệt đối, có dấu gạch chéo /, dùng hằng số chuỗi tĩnh để trình duyệt không hiểu sai
-            setTimeout(() => {
-                window.location.href = "https://jit.si" + roomName + "#userInfo.displayName=\"" + encodeURIComponent(userName) + "\"";
-            }, 1000);
-        }
-
-        async function toggleRecording() {
-            const btn = document.getElementById('record-btn');
-            if (!mediaRecorder || mediaRecorder.state === "inactive") {
-                try {
-                    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: "screen" }, audio: true });
-                    recordedChunks = [];
-                    mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
-                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
-                    mediaRecorder.onstop = () => {
-                        const blob = new Blob(recordedChunks, { type: "video/webm" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url; a.download = `cuoc-hop-deepzero.webm`; a.click();
-                        btn.innerText = "🔴 Ghi hình cuộc họp";
-                        alert("Video đã được tải về máy tính thành công!");
-                    };
-                    mediaRecorder.start();
-                    btn.innerText = "⏹️ Dừng ghi & Tải về";
-                } catch (err) { alert("Cần cấp quyền quay màn hình!"); }
-            } else {
-                mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            // Định dạng mã phòng thành chuẩn 3-4-3 ký tự của Google Meet để không bị lỗi bảo mật
+            if (roomId.length < 10) {
+                roomId = (roomId + "abcdefghij").substring(0, 10);
             }
+            const formattedRoom = roomId.substring(0,3) + "-" + roomId.substring(3,7) + "-" + roomId.substring(7,10);
+
+            // Chuyển hướng thẳng sang máy chủ Google Meet chính thức để lấy toàn bộ quyền quản lý phòng
+            window.location.href = "https://google.com" + formattedRoom;
         }
     </script>
 </body>
