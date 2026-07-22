@@ -123,21 +123,17 @@
                 userInfo: { displayName: userName },
                 lang: 'vi',
                 
-                // Mở quyền Quản trị viên (Moderator / Host)
+                // Mở toàn bộ tính năng cao cấp & phân quyền Trưởng phòng
                 configOverwrite: {
-                    disableRemoteMute: false, // Cho phép tắt tiếng người khác
+                    breakoutRooms: {
+                        hideAddRoomButton: false,
+                        hideAutoAssignButton: false,
+                        hideJoinRoomButton: false
+                    },
+                    disableRemoteMute: false,
                     remoteVideoMenu: {
-                        disableKick: false // Cho phép Kick người khác
+                        disableKick: false
                     }
-                },
-
-                // Hiển thị đầy đủ công cụ Quản trị & Chia nhóm ra thanh công cụ
-                interfaceConfigOverwrite: {
-                    TOOLBAR_BUTTONS: [
-                        'microphone', 'camera', 'desktop', 'chat', 'raisehand',
-                        'participants-pane', 'breakout-rooms', 'mute-everyone', 'mute-video-everyone',
-                        'kick', 'security', 'tileview', 'fullscreen', 'settings', 'hangup'
-                    ]
                 }
             };
 
