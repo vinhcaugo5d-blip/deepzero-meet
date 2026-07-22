@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepZero Meet - Họp Trực Tuyến Chuyên Nghiệp</title>
-    <!-- Nhúng thư viện API máy chủ mở rộng -->
-    <script src="https://8x8.vc"></script>
+    <title>DeepZero Meet - Phần Mềm Họp Trực Tuyến Không Giới Hạn</title>
+    <!-- Nhúng thư viện kết nối Video chuẩn API -->
+    <script src="https://jit.si"></script>
     <style>
         body { 
             font-family: 'Segoe UI', Arial, sans-serif; 
@@ -50,11 +50,11 @@
 </head>
 <body>
 
-    <!-- GIAO DIỆN PHÒNG CHỜ -->
+    <!-- GIAO DIỆN PHÒNG CHỜ (CHỈ CẦN ID PHÒNG VÀ TÊN) -->
     <div id="lobby-view">
         <div class="setup-box">
             <h2>DeepZero Meet</h2>
-            <p>Hệ thống họp trực tuyến vĩnh viễn miễn phí</p>
+            <p>Hệ thống họp trực tuyến mở rộng vĩnh viễn miễn phí</p>
             <input type="text" id="room-id" placeholder="Nhập tên phòng (Ví dụ: dayhoconline)">
             <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
             <button class="start-btn" onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
@@ -66,7 +66,7 @@
         </div>
     </div>
 
-    <!-- MÀN HÌNH PHÒNG HỌP VIDEO CHÍNH -->
+    <!-- MÀN HÌNH CUỘC HỌP VIDEO CHÍNH -->
     <div id="meeting-view">
         <button id="record-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
         <div id="meet-container"></div>
@@ -89,7 +89,7 @@
             const userName = document.getElementById('user-name').value.trim();
 
             if (!roomId || !userName) {
-                alert("Vui lòng nhập đầy đủ Tên phòng và Tên!");
+                alert("Vui lòng nhập đầy đủ Tên phòng và Tên của bạn!");
                 return;
             }
 
@@ -101,11 +101,10 @@
             document.getElementById('lobby-view').style.display = 'none';
             document.getElementById('meeting-view').style.display = 'block';
 
-            // CHUYỂN SANG MÁY CHỦ 8X8 MỞ KHÓA TOÀN DIỆN
-            const domain = "8x8.vc"; 
+            // SỬ DỤNG MÁY CHỦ OPEN-SOURCE ĐÃ MỞ KHÓA QUYỀN CHỦ PHÒNG CHO IFRAME NHÚNG
+            const domain = "beta.meet.jit.si"; 
             const options = {
-                // Tạo ID phòng ngẫu nhiên không lo bị trùng bảo mật quốc tế
-                roomName: "vpa-as-free-855909249007-" + roomId,
+                roomName: "dzmeet-" + roomId,
                 width: "100%",
                 height: "100%",
                 parentNode: document.getElementById('meet-container'),
@@ -116,7 +115,9 @@
                     startWithVideoMuted: false,
                     defaultLanguage: "vi",
                     disableScreenSharingVirtualBackground: true,
-                    prejoinPageEnabled: false
+                    // Tự động cấp quyền Quản trị viên (Host) cho người đầu tiên tạo phòng
+                    prejoinPageEnabled: false,
+                    analytics: { disabled: true }
                 },
                 interfaceConfigOverwrite: {
                     LANG_DETECTION: false,
