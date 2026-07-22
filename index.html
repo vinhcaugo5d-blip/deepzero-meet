@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeepZero Meet - Phần Mềm Họp Trực Tuyến Không Giới Hạn</title>
-    <!-- ĐÃ XÓA THẺ SCRIPT JITSI VÌ CHUYỂN HƯỚNG TRỰC TIẾP KHÔNG CẦN TẢI THƯ VIỆN IFRAME -->
     <style>
         body { 
             font-family: 'Segoe UI', Arial, sans-serif; 
@@ -76,20 +75,20 @@
                 return;
             }
 
-            // Tạo link mời tham gia dựa trên trang web của bạn
+            // Tạo liên kết mời tham gia để người dùng copy chia sẻ
             const baseUrl = window.location.origin + window.location.pathname;
             const shareLink = `${baseUrl}?room=${roomId}`;
             document.getElementById('share-link').innerText = shareLink;
             document.getElementById('meeting-info').style.display = 'block';
 
-            // Định dạng lại tên phòng để đồng bộ với Jitsi chính thức
+            // Định dạng tên phòng họp Jitsi công cộng
             const roomName = "dzmeet-" + roomId;
 
-            // Đổi từ cấu hình iframe sang chuyển hướng trang chính thức để hủy bỏ giới hạn 5 phút
-            // Đồng thời nhúng cấu hình hiển thị tên tự động vào URL băm (#)
+            // Xử lý chuyển hướng trang chính xác (đảm bảo đầy đủ ký tự "/" và cấu trúc URL của Jitsi)
             setTimeout(() => {
-                window.location.href = "https://jit.si" + roomName + "#userInfo.displayName=\"" + encodeURIComponent(userName) + "\"";
-            }, 1000); // Trì hoãn 1 giây để người dùng kịp nhìn thấy link chia sẻ vừa tạo
+                const targetUrl = `https://jit.si{roomName}#userInfo.displayName="${encodeURIComponent(userName)}"`;
+                window.location.href = targetUrl;
+            }, 1000); // Giữ lại delay 1 giây để người dùng kịp nhìn thấy link chia sẻ
         }
     </script>
 </body>
