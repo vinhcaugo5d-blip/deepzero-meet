@@ -80,22 +80,6 @@
         button.start-btn:hover {
             background: #007aff;
         }
-        #meeting-info {
-            display: none;
-            background: #1c1c1e;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            text-align: left;
-            border: 1px solid #3a3a3c;
-            font-size: 14px;
-        }
-        #share-link {
-            color: #0a84ff;
-            font-weight: bold;
-            word-break: break-all;
-            margin-top: 5px;
-        }
     </style>
 </head>
 <body>
@@ -108,10 +92,6 @@
             <input type="text" id="room-id" placeholder="Nhập tên phòng (Ví dụ: dayhoconline)">
             <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
             <button class="start-btn" onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
-            <div id="meeting-info">
-                <span>Gửi liên kết này cho người tham gia:</span>
-                <div id="share-link"></div>
-            </div>
         </div>
     </div>
 
@@ -136,9 +116,8 @@
 
             const roomName = "dzmeet-" + roomId;
             
-            // Chuyển hướng trực tiếp sang máy chủ Jitsi chính thức để tránh giới hạn 5 phút của iframe
-            // Đồng thời truyền tên hiển thị qua mã băm URL (#userInfo.displayName)
-            window.location.href = `https://jit.si{roomName}#userInfo.displayName="${encodeURIComponent(userName)}"`;
+            // Sửa lỗi nối chuỗi: Đảm bảo có dấu gạch chéo hợp lệ trước tên phòng
+            window.location.href = "https://jit.si" + roomName + '#userInfo.displayName="' + encodeURIComponent(userName) + '"';
         }
     </script>
 </body>
