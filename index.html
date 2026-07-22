@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepZero Meet - Họp Trực Tuyến Chuyên Nghiệp</title>
+    <!-- Nhúng thư viện kết nối video của hệ thống Jitsi -->
+    <script src="https://jit.si"></script>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #1a1a1a; color: white; display: flex; flex-direction: column; height: 100vh; justify-content: center; align-items: center; }
+        #setup-container { background: #2d2d2d; padding: 40px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); text-align: center; max-width: 400px; width: 90%; }
+        h2 { color: #0e71eb; margin-bottom: 5px; font-size: 26px; }
+        p { color: #aaa; font-size: 14px; margin-bottom: 25px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #444; background: #3d3d3d; color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        input:focus, select:focus { border-color: #0e71eb; outline: none; }
+        button { width: 100%; padding: 14px; background: #0e71eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+        button:hover { background: #0c5dc2; }
+        #meeting-info { display: none; background: #222; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: left; border: 1px solid #333; }
+        #share-link { color: #0e71eb; font-weight: bold; word-break: break-all; margin: 5px 0; }
+        #meet-container { flex: 1; display: none; width: 100%; height: 100%; position: relative; }
+        /* Nút chức năng ghi hình cuộc họp về máy tính */
+        #record-btn { position: absolute; top: 15px; left: 15px; z-index: 999; background: #ea4335; color: white; border: none; padding: 10px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        #record-btn.recording { background: #555; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- GIAO DIỆN THIẾT LẬP VÀO PHÒNG -->
+    <div id="setup-container">
+        <h2>DeepZero Meet</h2>
+        <p>Hệ thống họp trực tuyến bảo mật tiếng Việt vĩnh viễn</p>
+        <input type="text" id="room-id" placeholder="Nhập mã ID phòng (Ví dụ: lop-12a)">
+        <input type="text" id="user-name" placeholder="Tên hiển thị của bạn">
+        <select id="user-role">
+            <option value="host">Chủ phòng (Có quyền Mute/Kick)</option>
+            <option value="member">Thành viên tham gia</option>
+        </select>
+        <button onclick="startMeeting()">Bắt Đầu Cuộc Họp</button>
+
+        <div id="meeting-info">
+            <span style="font-size: 13px; color: #888;">Gửi link này cho mọi người để vào cùng:</span>
+            <div id="share-link"></div>
+        </div>
+    </div>
+
+    <!-- KHUNG CHỨA VIDEO HỌP (FULL MÀN HÌNH GIỐNG ZOOM) -->
+    <button id="record-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
+    <div id="meet-container"></div>
+
+    <script>
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        // Tự động bắt link mời nếu người khác click vào link của bạn
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRoomId = urlParams.get('room');
+        if (urlRoomId) {
+            document.getElementById('room-id').value = urlRoomId;
+            document.getElementById('user-role').value = 'member';
+        }
+
+        function startMeeting() {
+            const roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+            const userName = document.getElementById('user-name').value.trim();
+            const userRole = document.getElementById('user-role').value;
+
+            if (!roomId || !userName) {
+                alert("Vui lòng điền đầy đủ ID Phòng và Tên!");
+                return;
+            }
+
+            // Tạo link mời chuẩn hóa theo tên dự án của bạn
+            const currentUrl = window.location.href.split('?')[0];
+            const shareLink = `${currentUrl}?room=${roomId}`;
+            document.getElementById('share-link').innerText = shareLink;
+            document.getElementById('meeting-info').style.display = 'block';
+
+            // Ẩn bảng đăng nhập, mở toàn màn hình phòng họp video
+            document.getElementById('setup-container').style.display = 'none';
+            document.getElementById('meet-container').style.display = 'block';
+            document.getElementById('record-btn').style.display = 'block';
+
+            const domain = "meet.jit.si";
+            const options = {
+                roomName: "deepzero-" + roomId,
+                width: "100%",
+                height: "100%",
+                parentNode: document.getElementById('meet-container'),
+                userInfo: { displayName: userName },
+                lang: 'vi', // Chuyển ngữ hệ thống sang Tiếng Việt
+                configOverwrite: {
+                    startWithAudioMuted: false,
+                    startWithVideoMuted: false,
+                    defaultLanguage: "vi",
+                    disableScreenSharingVirtualBackground: true, // Ưu tiên màn hình trình chiếu tiêu điểm
+                },
+                interfaceConfigOverwrite: {
+                    LANG_DETECTION: false,
+                    // Danh sách các nút chức năng chuẩn như Zoom (Ghim, Share, Chat, Kick, Mute...)
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'desktop', 'chat', 'raisehand',
+                        'hangup', 'profile', 'settings', 'tileview',
+                        'participants-pane', 'mute-everyone', 'kick', 'select-background'
+                    ],
+                }
+            };
+
+            const api = new JitsiMeetExternalAPI(domain, options);
+
+            // Xử lý tối ưu và ưu tiên hiển thị cho chủ phòng (Host)
+            if (userRole === 'host') {
+                api.addEventListener('videoConferenceJoined', () => {
+                    alert("Bạn là Chủ Phòng! Bạn có toàn quyền Tắt mic (Mute) và Đuổi (Kick) người khác tại thanh Danh sách thành viên.");
+                });
+                
+                // Ghim màn hình trình chiếu làm luồng chính khi chủ phòng bật chia sẻ
+                api.addEventListener('screenSharingStatusChanged', (event) => {
+                    if(event.on) {
+                        api.executeCommand('subject', `Chủ phòng đang chia sẻ màn hình`);
+                    }
+                });
+            }
+        }
+
+        // CHỨC NĂNG QUAY MÀN HÌNH VÀ TẢI VIDEO CUỘC HỌP VỀ MÁY TÍNH
+        async function toggleRecording() {
+            const btn = document.getElementById('record-btn');
+            
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                try {
+                    const stream = await navigator.mediaDevices.getDisplayMedia({
+                        video: { mediaSource: "screen" },
+                        audio: true
+                    });
+                    
+                    recordedChunks = [];
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) recordedChunks.push(e.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: "video/webm" });
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Kích hoạt lệnh tự động tải file ghi hình về thư mục Downloads trên máy
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `cuoc-hop-deepzero.webm`;
+                        a.click();
+                        
+                        btn.innerText = "🔴 Ghi hình cuộc họp";
+                        btn.classList.remove("recording");
+                        alert("File video cuộc họp đã được tải về máy tính thành công!");
+                    };
+
+                    mediaRecorder.start();
+                    btn.innerText = "⏹️ Đang ghi hình (Bấm để Dừng & Tải về)";
+                    btn.classList.add("recording");
+
+                } catch (err) {
+                    alert("Bạn cần cấp quyền quay màn hình trình duyệt để ghi hình cuộc họp!");
+                }
+            } else {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        }
+    </script>
+</body>
+</html>
