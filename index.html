@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeepZero Meet - Phòng Họp Trực Tuyến</title>
     
-    <!-- Thư viện API chính thức đã tích hợp AppID của bạn -->
     <script src="https://8x8.vc/vpaas-magic-cookie-9ef7d3efd0a7465c864134c3d6d42f72/external_api.js"></script>
 
     <style>
@@ -72,7 +71,6 @@
     </div>
 
     <script>
-        // Mã AppID cá nhân của bạn từ jaas.8x8.vc
         var JAAS_APP_ID = "vpaas-magic-cookie-9ef7d3efd0a7465c864134c3d6d42f72"; 
 
         var mediaRecorder = null;
@@ -123,7 +121,24 @@
                 height: "100%",
                 parentNode: document.getElementById('meet-container'),
                 userInfo: { displayName: userName },
-                lang: 'vi'
+                lang: 'vi',
+                
+                // Mở quyền Quản trị viên (Moderator / Host)
+                configOverwrite: {
+                    disableRemoteMute: false, // Cho phép tắt tiếng người khác
+                    remoteVideoMenu: {
+                        disableKick: false // Cho phép Kick người khác
+                    }
+                },
+
+                // Hiển thị đầy đủ công cụ Quản trị & Chia nhóm ra thanh công cụ
+                interfaceConfigOverwrite: {
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'desktop', 'chat', 'raisehand',
+                        'participants-pane', 'breakout-rooms', 'mute-everyone', 'mute-video-everyone',
+                        'kick', 'security', 'tileview', 'fullscreen', 'settings', 'hangup'
+                    ]
+                }
             };
 
             var api = new JitsiMeetExternalAPI(domain, options);
