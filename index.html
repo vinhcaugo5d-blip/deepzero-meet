@@ -41,7 +41,6 @@
 </head>
 <body>
 
-    <!-- GIAO DIỆN PHÒNG CHỜ (CHỈ CẦN ID PHÒNG VÀ TÊN) -->
     <div id="lobby-view">
         <div class="setup-box">
             <h2>DeepZero Meet</h2>
@@ -75,20 +74,20 @@
                 return;
             }
 
-            // Tạo liên kết mời tham gia để người dùng copy chia sẻ
             const baseUrl = window.location.origin + window.location.pathname;
-            const shareLink = `${baseUrl}?room=${roomId}`;
+            const shareLink = baseUrl + "?room=" + roomId;
             document.getElementById('share-link').innerText = shareLink;
             document.getElementById('meeting-info').style.display = 'block';
 
-            // Định dạng tên phòng họp Jitsi công cộng
             const roomName = "dzmeet-" + roomId;
 
-            // Xử lý chuyển hướng trang chính xác (đảm bảo đầy đủ ký tự "/" và cấu trúc URL của Jitsi)
+            // Sử dụng đối tượng URL để ép trình duyệt dựng đúng cấu trúc link, không dùng nối chuỗi thủ công
+            const jitsiUrl = new URL("https://jit.si" + roomName);
+            jitsiUrl.hash = 'userInfo.displayName="' + encodeURIComponent(userName) + '"';
+
             setTimeout(() => {
-                const targetUrl = `https://jit.si{roomName}#userInfo.displayName="${encodeURIComponent(userName)}"`;
-                window.location.href = targetUrl;
-            }, 1000); // Giữ lại delay 1 giây để người dùng kịp nhìn thấy link chia sẻ
+                window.location.href = jitsiUrl.href;
+            }, 1000);
         }
     </script>
 </body>
