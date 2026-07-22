@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeepZero Meet - Hệ Thống Họp Trực Tuyến Chuyên Nghiệp</title>
-    <!-- Nhúng API kết nối Video Jitsi -->
-    <script src="https://jit.si"></script>
+    <title>DeepZero Meet - Phòng Họp Trực Tuyến</title>
+    
+    <!-- ĐƯỜNG LINK THƯ VIỆN CHUẨN ĐÃ ĐƯỢC SỬA LỖI -->
+    <script src="https://meet.jit.si/external_api.js"></script>
+
     <style>
         body { 
             font-family: 'Segoe UI', Arial, sans-serif; 
@@ -18,7 +20,6 @@
             height: 100vh; 
             overflow: hidden;
         }
-        /* GIAO DIỆN PHÒNG CHỜ (MÀN HÌNH ĐĂNG NHẬP) */
         #lobby-view { 
             display: flex;
             flex-direction: column;
@@ -80,8 +81,6 @@
             font-size: 14px; 
         }
         #share-link { color: #0a84ff; font-weight: bold; word-break: break-all; margin-top: 5px; }
-        
-        /* GIAO DIỆN PHÒNG HỌP VIDEO CHÍNH */
         #meeting-view { 
             display: none; 
             width: 100%; 
@@ -110,11 +109,11 @@
 </head>
 <body>
 
-    <!-- MÀN HÌNH 1: PHÒNG CHỜ NHẬP THÔNG TIN (LUÔN CỐ ĐỊNH BAN ĐẦU) -->
+    <!-- MÀN HÌNH CHỜ NHẬP THÔNG TIN -->
     <div id="lobby-view">
         <div class="setup-box">
             <h2>DeepZero Meet</h2>
-            <p>Phần mềm họp trực tuyến vĩnh viễn miễn phí</p>
+            <p>Hệ thống họp video trực tuyến vĩnh viễn miễn phí</p>
             <input type="text" id="room-id" placeholder="Nhập mã ID phòng (Ví dụ: lop12a)">
             <input type="text" id="user-name" placeholder="Nhập tên hiển thị của bạn">
             <select id="user-role">
@@ -130,7 +129,7 @@
         </div>
     </div>
 
-    <!-- MÀN HÌNH 2: KHUNG VIDEO PHÒNG HỌP CHÍNH (ẨN ĐI LÚC ĐẦU) -->
+    <!-- MÀN HÌNH PHÒNG HỌP VIDEO CHÍNH -->
     <div id="meeting-view">
         <button id="record-btn" onclick="toggleRecording()">🔴 Ghi hình cuộc họp</button>
         <div id="meet-container"></div>
@@ -140,7 +139,6 @@
         let mediaRecorder;
         let recordedChunks = [];
 
-        // Đọc tham số mã phòng từ link mời nhưng KHÔNG can thiệp ẩn hiện form
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const urlRoomId = urlParams.get('room');
@@ -150,28 +148,30 @@
             }
         });
 
-        // Hàm chính kích hoạt phòng họp khi bấm nút Start
         function startMeeting() {
             const roomId = document.getElementById('room-id').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
             const userName = document.getElementById('user-name').value.trim();
             const userRole = document.getElementById('user-role').value;
 
             if (!roomId || !userName) {
-                alert("Vui lòng điền đầy đủ ID Phòng và Tên hiển thị!");
+                alert("Vui lòng điền đầy đủ ID Phòng và Tên!");
                 return;
             }
 
-            // Sinh link mời tham gia phòng
             const baseUrl = window.location.origin + window.location.pathname;
             const shareLink = `${baseUrl}?room=${roomId}`;
             document.getElementById('share-link').innerText = shareLink;
             document.getElementById('meeting-info').style.display = 'block';
 
-            // Xử lý chuyển đổi màn hình: Xóa bỏ phòng chờ, dựng phòng họp video chính
             document.getElementById('lobby-view').style.display = 'none';
             document.getElementById('meeting-view').style.display = 'block';
 
-            // Khởi tạo máy chủ kết nối truyền video
+            // KHỞI TẠO BIẾN API CHUẨN
+            if (typeof JitsiMeetExternalAPI === 'undefined') {
+                alert("Không thể tải hệ thống video. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại bằng 4G!");
+                return;
+            }
+
             const domain = "meet.jit.si";
             const options = {
                 roomName: "deepzero-" + roomId,
@@ -198,15 +198,13 @@
 
             const api = new JitsiMeetExternalAPI(domain, options);
 
-            // Phân quyền cho chủ phòng
             if (userRole === 'host') {
                 api.addEventListener('videoConferenceJoined', () => {
-                    alert("Bạn đăng nhập với tư cách Chủ Phòng! Tính năng Tắt mic tập thể (Mute All) và Đuổi người tham gia (Kick) đã sẵn sàng ở tab Danh sách thành viên.");
+                    alert("Bạn là Chủ Phòng! Quyền Mute All và Đuổi người dùng đã sẵn sàng ở phần Thành viên.");
                 });
             }
         }
 
-        // Chức năng quay màn hình và tải video cuộc họp về máy
         async function toggleRecording() {
             const btn = document.getElementById('record-btn');
             if (!mediaRecorder || mediaRecorder.state === "inactive") {
@@ -223,12 +221,12 @@
                         a.download = `cuoc-hop-deepzero.webm`;
                         a.click();
                         btn.innerText = "🔴 Ghi hình cuộc họp";
-                        alert("Video cuộc họp đã được tải thành công về thư mục Downloads máy tính!");
+                        alert("Video đã được tải về máy tính thành công!");
                     };
                     mediaRecorder.start();
                     btn.innerText = "⏹️ Dừng ghi & Tải về";
                 } catch (err) {
-                    alert("Bạn cần cấp quyền chia sẻ tab trình duyệt để thực hiện ghi hình!");
+                    alert("Cần cấp quyền quay màn hình cuộc họp!");
                 }
             } else {
                 mediaRecorder.stop();
